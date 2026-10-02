@@ -1,0 +1,223 @@
+-- Kiểm tra xem người chơi đã nhập đúng key hay chưa
+local correctKey = "OuroborosHubKeyHsjskwjKalwpwoMamqoekeo"
+local TweenService = game:GetService("TweenService")
+
+-- Tên file lưu trạng thái key (Lưu 24 giờ)
+local saveFileName = "OuroborosHub_KeyData.json"
+local dayInSeconds = 86400 -- 24 giờ tính bằng giây
+
+-- Hàm kiểm tra xem key đã được lưu và còn hạn hay không
+local function hasValidKey()
+    if readfile and writefile and isfile then
+        if isfile(saveFileName) then
+            local success, data = pcall(function()
+                return game:GetService("HttpService"):JSONDecode(readfile(saveFileName))
+            end)
+            if success and data and data.key == correctKey and (os.time() - data.time < dayInSeconds) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- Hàm lưu key khi nhập đúng
+local function saveKey()
+    if writefile and game:GetService("HttpService") then
+        local data = {
+            key = correctKey,
+            time = os.time()
+        }
+        pcall(function()
+            writefile(saveFileName, game:GetService("HttpService"):JSONEncode(data))
+        end)
+    end
+end
+
+-- Hàm chạy script chính
+local function loadMainScript()
+    local success, err = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()
+    end)
+    if not success then
+        warn("Error loading script: " .. tostring(err))
+    end
+end
+
+-- Nếu đã lưu key hợp lệ trong vòng 24h thì bỏ qua bảng Key System luôn
+if hasValidKey() then
+    loadMainScript()
+    return
+end
+
+-- Khởi tạo ScreenGui giao diện
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local DropShadow = Instance.new("UIStroke")
+local TitleLabel = Instance.new("TextLabel")
+local SubtitleLabel = Instance.new("TextLabel")
+
+-- Khung chứa ô nhập chữ
+local InputContainer = Instance.new("Frame")
+local InputContainerCorner = Instance.new("UICorner")
+local TextBox = Instance.new("TextBox")
+
+local StatusLabel = Instance.new("TextLabel")
+local CheckButton = Instance.new("TextButton")
+local CheckCorner = Instance.new("UICorner")
+local GetKeyButton = Instance.new("TextButton")
+local GetKeyCorner = Instance.new("UICorner")
+
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "OuroborosKeySystem"
+ScreenGui.ResetOnSpawn = false
+
+-- Khung chính
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+MainFrame.Position = UDim2.new(0.5, -210, 0.5, -135)
+MainFrame.Size = UDim2.new(0, 420, 0, 270)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+UICorner.Parent = MainFrame
+UICorner.CornerRadius = UDim.new(0, 14)
+
+-- Viền khung hồng nhạt
+DropShadow.Parent = MainFrame
+DropShadow.Color = Color3.fromRGB(255, 182, 193)
+DropShadow.Thickness = 2
+DropShadow.Transparency = 0.4
+
+-- Tiêu đề chính
+TitleLabel.Parent = MainFrame
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Position = UDim2.new(0, 0, 0, 18)
+TitleLabel.Size = UDim2.new(1, 0, 0, 35)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "Ouroboros Hub"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 192, 203)
+TitleLabel.TextSize = 26
+
+-- Phụ đề tiếng Anh
+SubtitleLabel.Parent = MainFrame
+SubtitleLabel.BackgroundTransparency = 1
+SubtitleLabel.Position = UDim2.new(0, 0, 0, 50)
+SubtitleLabel.Size = UDim2.new(1, 0, 0, 20)
+SubtitleLabel.Font = Enum.Font.Gotham
+SubtitleLabel.Text = "Please enter your key to continue"
+SubtitleLabel.TextColor3 = Color3.fromRGB(160, 160, 170)
+SubtitleLabel.TextSize = 13
+
+-- Khung bao bọc ô nhập chữ
+InputContainer.Parent = MainFrame
+InputContainer.BackgroundColor3 = Color3.fromRGB(50, 50, 58)
+InputContainer.Position = UDim2.new(0.1, 0, 0.35, 0)
+InputContainer.Size = UDim2.new(0.8, 0, 0, 45)
+InputContainer.ClipsDescendants = true
+
+InputContainerCorner.Parent = InputContainer
+InputContainerCorner.CornerRadius = UDim.new(0, 10)
+
+-- Ô nhập Key (Đã căn giữa hoàn toàn)
+TextBox.Parent = InputContainer
+TextBox.BackgroundTransparency = 1
+TextBox.Position = UDim2.new(0, 0, 0, 0)
+TextBox.Size = UDim2.new(1, 0, 1, 0)
+TextBox.Font = Enum.Font.GothamSemibold
+TextBox.PlaceholderText = "Enter your key here..."
+TextBox.Text = ""
+TextBox.TextColor3 = Color3.fromRGB(240, 240, 240)
+TextBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
+TextBox.TextSize = 14
+TextBox.ClearTextOnFocus = false
+TextBox.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Dòng thông báo trạng thái lỗi
+StatusLabel.Parent = MainFrame
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Position = UDim2.new(0.1, 0, 0.53, 0)
+StatusLabel.Size = UDim2.new(0.8, 0, 0, 20)
+StatusLabel.Font = Enum.Font.GothamMedium
+StatusLabel.Text = ""
+StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+StatusLabel.TextSize = 12
+
+-- Nút Xác Nhận (Submit Key)
+CheckButton.Parent = MainFrame
+CheckButton.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+CheckButton.Position = UDim2.new(0.1, 0, 0.68, 0)
+CheckButton.Size = UDim2.new(0.48, 0, 0, 44)
+CheckButton.Font = Enum.Font.GothamBold
+CheckButton.Text = "Submit Key"
+CheckButton.TextColor3 = Color3.fromRGB(35, 35, 40)
+CheckButton.TextSize = 15
+
+CheckCorner.Parent = CheckButton
+CheckCorner.CornerRadius = UDim.new(0, 10)
+
+-- Nút Get Key
+GetKeyButton.Parent = MainFrame
+GetKeyButton.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+GetKeyButton.Position = UDim2.new(0.61, 0, 0.68, 0)
+GetKeyButton.Size = UDim2.new(0.29, 0, 0, 44)
+GetKeyButton.Font = Enum.Font.GothamBold
+GetKeyButton.Text = "Get Key"
+GetKeyButton.TextColor3 = Color3.fromRGB(255, 182, 193)
+GetKeyButton.TextSize = 15
+
+GetKeyCorner.Parent = GetKeyButton
+GetKeyCorner.CornerRadius = UDim.new(0, 10)
+
+-- Hiệu ứng lắc siêu mượt
+local function smoothShake()
+    local originalPos = MainFrame.Position
+    local tweenInfo = TweenInfo.new(0.05, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+    local shakeOffsets = {-8, 8, -6, 6, -3, 3, 0}
+    
+    for _, offset in ipairs(shakeOffsets) do
+        local targetPos = originalPos + UDim2.new(0, offset, 0, 0)
+        local tween = TweenService:Create(MainFrame, tweenInfo, {Position = targetPos})
+        tween:Play()
+        tween.Completed:Wait()
+    end
+    
+    MainFrame.Position = originalPos
+end
+
+-- Xử lý sự kiện nhấn nút "Submit Key"
+CheckButton.MouseButton1Click:Connect(function()
+    if TextBox.Text == correctKey then
+        StatusLabel.TextColor3 = Color3.fromRGB(152, 251, 152)
+        StatusLabel.Text = "Success! Loading..."
+        
+        -- Lưu key để dùng trong 24 giờ tiếp theo
+        saveKey()
+        
+        task.wait(0.4)
+        ScreenGui:Destroy()
+        loadMainScript()
+    else
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        StatusLabel.Text = "Incorrect key! Please try again."
+        TextBox.Text = ""
+        smoothShake()
+    end
+end)
+
+-- Xử lý sự kiện nhấn nút "Get Key" (Đã thay link)
+GetKeyButton.MouseButton1Click:Connect(function()
+    local getKeyLink = "https://link4m.net/Mao9O"
+    if setclipboard then
+        setclipboard(getKeyLink)
+        GetKeyButton.Text = "Copied!"
+        task.wait(1)
+        GetKeyButton.Text = "Get Key"
+    else
+        print("Get Key Link: " .. getKeyLink)
+        GetKeyButton.Text = "Check Console"
+        task.wait(1)
+        GetKeyButton.Text = "Get Key"
+    end
+end)
